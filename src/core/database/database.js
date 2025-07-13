@@ -9,9 +9,10 @@ if (config.database.url) {
     dialect: config.database.dialect,
     dialectModule: config.database.dialectModule,
     dialectOptions: {
-      ssl: config.database.ssl
+      //ssl: config.database.ssl
+      rejectUnauthorized: false,
     },
-    logging: config.logging.level === 'debug' ? console.log : false,
+    logging: config.logging.level === 'debug' ? console.log : true,
   });
 } else {
   sequelize = new Sequelize(
@@ -21,7 +22,7 @@ if (config.database.url) {
     {
       host: config.database.host,
       dialect: config.database.dialect,
-      logging: config.logging.level === 'debug' ? console.log : false,
+      logging: config.logging.level === 'debug' ? console.log : true,
     }
   );
 }
