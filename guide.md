@@ -142,7 +142,7 @@ El cliente debe establecer una conexión con el servidor de Socket.IO. **La aute
 -   **URL del Servidor:** `http://localhost:3001` (la misma que la API)
 -   **Método de Conexión (JavaScript):**
     ```javascript
-    const token = localStorage.getItem('mikuverse_token');
+    const token = localStorage.getItem('jwt_token');
 
     const socket = io("http://localhost:3001", {
       auth: {

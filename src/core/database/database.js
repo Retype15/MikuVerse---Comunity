@@ -1,35 +1,33 @@
-// src/core/database/database.js
-
+// /src/core/database/database.js
 const { Sequelize } = require('sequelize');
 const config = require('../config/config');
+const logger = require('../config/logger');
 
 let sequelize;
 
+// Usar la URL de producción si existe
 if (config.database.url) {
-  let sslConfig = {
-    rejectUnauthorized: false,
-  };
-
+  logger.info("Conectando a la base de datos de producción (Railway)...");
   sequelize = new Sequelize(config.database.url, {
-    dialect: config.database.dialect,
+    dialect: 'mysql', // Railway usa MySQL
     dialectModule: require('mysql2'),
     dialectOptions: {
-      ssl: sslConfig,
+      ssl: {
+        // Esta configuración es a menudo necesaria para DBs en la nube
+        rejectUnauthorized: true, 
+      }
     },
-    logging: config.logging.level === 'debug' ? console.log : true,
+    logging: false,
   });
-
 } else {
-  sequelize = new Sequelize(
-    config.database.name,
-    config.database.user,
-    config.database.password,
-    {
-      host: config.database.host,
-      dialect: config.database.dialect,
-      logging: config.logging.level === 'debug' ? console.log : true,
-    }
-  );
+  // Usar la configuración local como fallback
+  logger.info("Conectando a la base de datos local (MariaDB)...");
+  const dbLocal = config.database.local;
+  sequelize = new Sequelize(dbLocal.name, dbLocal.user, dbLocal.password, {
+    host: dbLocal.host,
+    dialect: dbLocal.dialect,
+    logging: false,
+  });
 }
 
 module.exports = sequelize;

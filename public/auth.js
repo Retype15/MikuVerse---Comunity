@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const token = localStorage.getItem('mikuverse_token');
+    const token = localStorage.getItem('jwt_token');
     if (token) {
         window.location.href = '/app.html';
         return;
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         await handleFormSubmit('/api/auth/login', loginForm, (result) => {
-            localStorage.setItem('mikuverse_token', result.token);
+            localStorage.setItem('jwt_token', result.token);
             const urlParams = new URLSearchParams(window.location.search);
             const redirectUrl = urlParams.get('redirect');
             window.location.href = redirectUrl || '/app.html';
