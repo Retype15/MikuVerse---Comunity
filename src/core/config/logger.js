@@ -2,17 +2,22 @@
 const pino = require('pino');
 const config = require('./config');
 
-const logger = pino({
+let loggerOptions = {
   level: config.logging.level,
-  transport: {
+};
+
+if (process.env.NODE_ENV !== 'production' || config.logging.debugMode) {
+  loggerOptions.transport = {
     target: 'pino-pretty',
     options: {
       colorize: true,
       translateTime: 'SYS:dd-mm-yyyy HH:MM:ss',
       ignore: 'pid,hostname',
     },
-  },
-});
+  };
+}
+
+const logger = pino(loggerOptions);
 
 logger.debugOnly = (message, ...args) => {
   if (config.logging.debugMode) {
