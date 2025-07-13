@@ -1,21 +1,4 @@
-// /public/auth.js
-
 document.addEventListener('DOMContentLoaded', async () => {
-    const errorMessageDiv = document.getElementById('error-message');
-
-    function showError(message) {
-        if (errorMessageDiv) {
-            errorMessageDiv.textContent = message;
-            errorMessageDiv.style.display = 'block';
-        }
-    }
-
-    function hideError() {
-        if (errorMessageDiv) {
-            errorMessageDiv.style.display = 'none';
-        }
-    }
-
     const token = localStorage.getItem('mikuverse_token');
     if (token) {
         window.location.href = '/app.html';
@@ -25,9 +8,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let cloudflareSiteKey = null;
     try {
         const response = await fetch('/api/misc/config');
-        if (!response.ok) {
-            throw new Error(`Error del servidor: ${response.statusText}`);
-        }
         const data = await response.json();
         cloudflareSiteKey = data.cloudflareSiteKey;
         if (!cloudflareSiteKey) {
@@ -46,21 +26,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const showRegisterBtn = document.getElementById('show-register');
     const showLoginBtn = document.getElementById('show-login');
+    
+    const errorMessageDiv = document.getElementById('error-message');
 
     let loginWidgetId = null;
     let registerWidgetId = null;
 
     function renderTurnstile(view) {
-        if (!window.turnstile || !cloudflareSiteKey) return;
-
+        if (!window.turnstile || !cloudflareSiteKey) {
+            console.error("La API de Turnstile o la Site Key no están disponibles.");
+            return;
+        }
         if (view === 'login' && !loginWidgetId) {
-            loginWidgetId = window.turnstile.render('#turnstile-login-widget', {
-                sitekey: cloudflareSiteKey,
-            });
+            loginWidgetId = window.turnstile.render('#turnstile-login-widget', { sitekey: cloudflareSiteKey });
         } else if (view === 'register' && !registerWidgetId) {
-            registerWidgetId = window.turnstile.render('#turnstile-register-widget', {
-                sitekey: cloudflareSiteKey,
-            });
+            registerWidgetId = window.turnstile.render('#turnstile-register-widget', { sitekey: cloudflareSiteKey });
         }
     }
 
@@ -98,13 +78,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function handleFormSubmit(endpoint, form, onSuccess) {
         hideError();
+        
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
+
         const turnstileResponse = window.turnstile.getResponse(form.querySelector('[id^="turnstile-"] > iframe'));
+        
         if (!turnstileResponse) {
             showError('Por favor, completa la verificación.');
             return;
         }
+        
         data['cf-turnstile-response'] = turnstileResponse;
 
         try {
@@ -114,20 +98,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify(data),
             });
             const result = await response.json();
+
             if (!response.ok) throw new Error(result.message);
+            
             onSuccess(result);
+
         } catch (error) {
             showError(error.message);
         } finally {
             if (window.turnstile) {
                 try {
-                    if (loginWidgetId) window.turnstile.reset(loginWidgetId);
-                    if (registerWidgetId) window.turnstile.reset(registerWidgetId);
+                    const widgetId = form.id === 'login-form' ? loginWidgetId : registerWidgetId;
+                    if (widgetId) window.turnstile.reset(widgetId);
                 } catch (e) {
                     console.error('Error al resetear Turnstile', e);
                 }
             }
         }
+    }
+
+    function showError(message) {
+        errorMessageDiv.textContent = message;
+        errorMessageDiv.style.display = 'block';
+    }
+
+    function hideError() {
+        errorMessageDiv.style.display = 'none';
     }
 
     renderTurnstile('login');
