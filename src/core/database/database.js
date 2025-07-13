@@ -1,7 +1,7 @@
 // src/core/database/database.js
 
 const { Sequelize } = require('sequelize');
-const config = require('./config');
+const config = require('../config/config');
 const fs = require('fs');
 const path = require('path');
 
