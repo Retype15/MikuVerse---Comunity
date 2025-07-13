@@ -13,7 +13,7 @@ if (config.database.url) {
     dialectModule: require('mysql2'),
     dialectOptions: {
       ssl: {
-        rejectUnauthorized: true,
+        rejectUnauthorized: false, 
       }
     },
     logging: false,
