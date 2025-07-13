@@ -1,4 +1,5 @@
 // src/core/database/database.js
+
 const { Sequelize } = require('sequelize');
 const config = require('./config');
 const fs = require('fs');
@@ -7,44 +8,32 @@ const path = require('path');
 let sequelize;
 
 if (config.database.url) {
-  // Configuración SSL predeterminada para MySQL/MariaDB en la nube
   let sslConfig = {
-    rejectUnauthorized: true, // Por defecto, siempre verificar certificados
+    rejectUnauthorized: true,
   };
 
-  // Intentar cargar el certificado CA si existe y estamos en producción
-  if (process.env.NODE_ENV === 'production' && process.env.DB_CERT_CA_PATH) {
-      try {
-          // Asegúrate de que el certificado CA se sube a Vercel con la aplicación
-          // o que se pega directamente como variable de entorno si es pequeño.
-          sslConfig.ca = fs.readFileSync(path.join(process.cwd(), process.env.DB_CERT_CA_PATH));
-      } catch (e) {
-          console.error("Advertencia: No se pudo cargar el certificado CA para la base de datos:", e.message);
-          // Si no se carga el CA y rejectUnauthorized es true, la conexión fallará.
-          // En este punto, decidir si rejectUnauthorized debe ser false para continuar con el despliegue
-          // o si es un error fatal. Para desarrollo, se puede dejar en false.
-      }
+  if (process.env.DB_CERT_CA_PATH) {
+    try {
+      const caCertPath = path.resolve(process.env.DB_CERT_CA_PATH);
+      sslConfig.ca = fs.readFileSync(caCertPath).toString();
+      console.log(`[DB] Certificado CA cargado desde: ${caCertPath}`);
+    } catch (e) {
+      console.error(`[DB ERROR] No se pudo cargar el certificado CA SSL desde ${process.env.DB_CERT_CA_PATH}:`, e.message);
+    }
+  } else {
+    console.warn("[DB WARNING] Variable DB_CERT_CA_PATH no definida. La conexión SSL podría fallar si el host requiere un CA específico y rejectUnauthorized es true.");
   }
-
-  // Si estás depurando y quieres desactivar temporalmente rejectUnauthorized:
-  // if (process.env.DISABLE_DB_SSL_VERIFICATION === 'true') {
-  //   sslConfig.rejectUnauthorized = false;
-  //   console.warn("ADVERTENCIA: Verificación SSL de la base de datos deshabilitada. NO USAR EN PRODUCCIÓN.");
-  // }
-
 
   sequelize = new Sequelize(config.database.url, {
     dialect: config.database.dialect,
-    dialectModule: config.database.dialectModule,
-    // --- CAMBIO CRÍTICO AQUÍ ---
+    dialectModule: require('mysql2'),
     dialectOptions: {
-      ssl: sslConfig, // Pasamos el objeto sslConfig directamente
+      ssl: sslConfig,
     },
-    // --- FIN DEL CAMBIO CRÍTICO ---
-    logging: true, // Mantener en true para ver los logs detallados
+    logging: config.logging.level === 'debug' ? console.log : false,
   });
+
 } else {
-  // Código de desarrollo local (sin cambios)
   sequelize = new Sequelize(
     config.database.name,
     config.database.user,
