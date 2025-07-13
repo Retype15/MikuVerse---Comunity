@@ -1,30 +1,29 @@
 const { Sequelize } = require('sequelize');
+const config = require('./config');
 require('dotenv').config();
 
 let sequelize;
 
-if (process.env.DATABASE_URL) {
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'mysql',
-    dialectModule: require('mysql2'),
+if (config.database.url) {
+  sequelize = new Sequelize(config.database.url, {
+    dialect: config.database.dialect,
+    dialectModule: config.database.dialectModule,
     dialectOptions: {
-      ssl: {
-        rejectUnauthorized: true,
-      }
+      ssl: config.database.ssl
     },
-    logging: false,
+    logging: config.logging.level === 'debug' ? console.log : false,
   });
 } else {
   sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
+    config.database.name,
+    config.database.user,
+    config.database.password,
     {
-      host: process.env.DB_HOST,
-      dialect: 'mariadb',
-      logging: false,
+      host: config.database.host,
+      dialect: config.database.dialect,
+      logging: config.logging.level === 'debug' ? console.log : false,
     }
   );
-}//
+}
 
 module.exports = sequelize;
