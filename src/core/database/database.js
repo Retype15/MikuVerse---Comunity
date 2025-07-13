@@ -25,6 +25,6 @@ if (process.env.DATABASE_URL) {
       logging: false,
     }
   );
-}
+}//
 
 module.exports = sequelize;
