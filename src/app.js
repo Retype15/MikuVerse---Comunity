@@ -50,7 +50,7 @@ app.get(/^(.*)$/, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
-sequelize.sync({alter: true})
+sequelize.sync()
   .then(() => logger.info('Base de datos sincronizada correctamente.'))
   .catch((err) => logger.error('Error al sincronizar la base de datos:', err));
 

@@ -1,9 +1,9 @@
 // /src/core/config/config.js
+
 require('dotenv').config();
 
 const isDebugMode = process.argv.includes('--debug');
 
-// Exportamos un objeto de configuración claro y directo.
 const config = {
   // Configuración del Servidor
   server: {
