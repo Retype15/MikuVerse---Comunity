@@ -13,6 +13,7 @@
         <div id="error-message" class="error-message"></div>
 
         <div id="login-view" class="auth-form active">
+            <h2>Iniciar Sesión</h2>
             <form id="login-form">
                 <input type="email" id="login-email" name="email" placeholder="Correo electrónico" required>
                 <input type="password" id="login-password" name="password" placeholder="Contraseña" required>
@@ -27,6 +28,7 @@
         </div>
 
         <div id="register-view" class="auth-form">
+            <h2>Crear Cuenta</h2>
             <form id="register-form">
                 <input type="text" id="register-username" name="username" placeholder="Nombre de usuario" required>
                 <input type="email" id="register-email" name="email" placeholder="Correo electrónico" required>
@@ -40,6 +42,21 @@
                 <a id="show-login">¿Ya tienes cuenta? Inicia sesión</a>
             </div>
         </div>
+        
+        <!-- === NUEVO FORMULARIO PARA COMPLETAR REGISTRO DE GOOGLE === -->
+        <div id="google-complete-view" class="auth-form">
+            <h2>Completa tu Perfil</h2>
+            <p>Elige un nombre de usuario y una contraseña para tu cuenta.</p>
+            <form id="google-complete-form">
+                <input type="hidden" name="tempToken" id="google-temp-token">
+                <input type="email" id="google-email" name="email" placeholder="Correo electrónico" readonly>
+                <input type="text" id="google-username" name="username" placeholder="Elige un nombre de usuario" required>
+                <input type="password" id="google-password" name="password" placeholder="Crea una contraseña" required>
+                <div id="turnstile-google-widget"></div>
+                <button type="submit">Finalizar Registro</button>
+            </form>
+        </div>
+
     </div>
     <script src="auth.js"></script>
 </body>

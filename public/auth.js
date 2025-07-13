@@ -1,28 +1,42 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    // Función para decodificar un JWT sin verificar la firma (solo para leer datos públicos)
+    const decodeJwt = (token) => {
+        try {
+            return JSON.parse(atob(token.split('.')[1]));
+        } catch (e) {
+            return null;
+        }
+    };
+
+    // --- 1. Verificación Inicial ---
     const token = localStorage.getItem('jwt_token');
     if (token) {
         window.location.href = '/app.html';
         return;
     }
 
+    // --- 2. Obtener Configuración del Backend ---
     let cloudflareSiteKey = null;
     try {
         const response = await fetch('/api/misc/config');
+        if (!response.ok) throw new Error('No se pudo obtener la configuración del servidor.');
         const data = await response.json();
         cloudflareSiteKey = data.cloudflareSiteKey;
-        if (!cloudflareSiteKey) {
-            throw new Error("Cloudflare Site Key no recibida del backend.");
-        }
+        if (!cloudflareSiteKey) throw new Error("Cloudflare Site Key no recibida del backend.");
     } catch (error) {
-        console.error("Error al obtener la Site Key de Cloudflare:", error);
+        console.error("Error crítico de configuración:", error);
         showError("No se pudo cargar el sistema de verificación. Inténtalo de nuevo más tarde.");
         return;
     }
 
+    // --- 3. Elementos del DOM y Estado ---
     const loginView = document.getElementById('login-view');
     const registerView = document.getElementById('register-view');
+    const googleCompleteView = document.getElementById('google-complete-view');
+    
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
+    const googleCompleteForm = document.getElementById('google-complete-form');
     
     const showRegisterBtn = document.getElementById('show-register');
     const showLoginBtn = document.getElementById('show-login');
@@ -31,64 +45,80 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let loginWidgetId = null;
     let registerWidgetId = null;
+    let googleWidgetId = null;
+    
+    const allViews = [loginView, registerView, googleCompleteView];
 
-    function renderTurnstile(view) {
-        if (!window.turnstile || !cloudflareSiteKey) {
-            console.error("La API de Turnstile o la Site Key no están disponibles.");
-            return;
+    // --- 4. Manejo de Vistas y Flujo de Autenticación ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const tempToken = urlParams.get('tempToken');
+
+    if (tempToken) {
+        // --- FLUJO: COMPLETAR REGISTRO DE GOOGLE ---
+        const decoded = decodeJwt(tempToken);
+        if (decoded && decoded.email) {
+            allViews.forEach(v => v.classList.remove('active'));
+            googleCompleteView.classList.add('active');
+            
+            document.getElementById('google-temp-token').value = tempToken;
+            document.getElementById('google-email').value = decoded.email;
+            document.getElementById('google-username').value = decoded.suggestedUsername + Math.floor(Math.random() * 1000);
+            
+            renderTurnstile('google');
+            // Limpiar URL
+            window.history.replaceState({}, document.title, "/index.html");
+        } else {
+            showError('El token de registro es inválido. Por favor, intenta registrarte con Google de nuevo.');
         }
-        if (view === 'login' && !loginWidgetId) {
-            loginWidgetId = window.turnstile.render('#turnstile-login-widget', { sitekey: cloudflareSiteKey });
-        } else if (view === 'register' && !registerWidgetId) {
-            registerWidgetId = window.turnstile.render('#turnstile-register-widget', { sitekey: cloudflareSiteKey });
+    } else {
+        // --- FLUJO: LOGIN/REGISTRO NORMAL ---
+        loginView.classList.add('active');
+        renderTurnstile('login');
+    }
+
+    showRegisterBtn.addEventListener('click', () => switchView('register'));
+    showLoginBtn.addEventListener('click', () => switchView('login'));
+    
+    function switchView(viewName) {
+        hideError();
+        allViews.forEach(v => v.classList.remove('active'));
+        if (viewName === 'login') {
+            loginView.classList.add('active');
+            renderTurnstile('login');
+        } else if (viewName === 'register') {
+            registerView.classList.add('active');
+            renderTurnstile('register');
         }
     }
 
-    showRegisterBtn.addEventListener('click', () => {
-        loginView.classList.remove('active');
-        registerView.classList.add('active');
-        hideError();
-        renderTurnstile('register');
-    });
+    // --- 5. Lógica de Formularios y Turnstile ---
+    loginForm.addEventListener('submit', (e) => handleFormSubmit(e, '/api/auth/login', loginForm, handleLoginSuccess));
+    registerForm.addEventListener('submit', (e) => handleFormSubmit(e, '/api/auth/register', registerForm, handleRegisterSuccess));
+    googleCompleteForm.addEventListener('submit', (e) => handleFormSubmit(e, '/api/auth/complete-google', googleCompleteForm, handleLoginSuccess));
 
-    showLoginBtn.addEventListener('click', () => {
-        registerView.classList.remove('active');
-        loginView.classList.add('active');
-        hideError();
-        renderTurnstile('login');
-    });
+    function handleLoginSuccess(result) {
+        localStorage.setItem('jwt_token', result.token);
+        const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
+        window.location.href = redirectUrl || '/app.html';
+    }
 
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await handleFormSubmit('/api/auth/login', loginForm, (result) => {
-            localStorage.setItem('jwt_token', result.token);
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirectUrl = urlParams.get('redirect');
-            window.location.href = redirectUrl || '/app.html';
-        });
-    });
+    function handleRegisterSuccess() {
+        alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
+        switchView('login');
+    }
 
-    registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await handleFormSubmit('/api/auth/register', registerForm, () => {
-            alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
-            showLoginBtn.click();
-        });
-    });
-
-    async function handleFormSubmit(endpoint, form, onSuccess) {
+    async function handleFormSubmit(event, endpoint, form, onSuccess) {
+        event.preventDefault();
         hideError();
         
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-
-        const turnstileResponse = window.turnstile.getResponse(form.querySelector('[id^="turnstile-"] > iframe'));
-        
+        const turnstileResponse = window.turnstile.getResponse(form.querySelector('.cf-turnstile, [id^="turnstile-"]'));
         if (!turnstileResponse) {
             showError('Por favor, completa la verificación.');
             return;
         }
-        
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
         data['cf-turnstile-response'] = turnstileResponse;
 
         try {
@@ -98,22 +128,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify(data),
             });
             const result = await response.json();
-
             if (!response.ok) throw new Error(result.message);
-            
             onSuccess(result);
-
         } catch (error) {
             showError(error.message);
         } finally {
             if (window.turnstile) {
-                try {
-                    const widgetId = form.id === 'login-form' ? loginWidgetId : registerWidgetId;
-                    if (widgetId) window.turnstile.reset(widgetId);
-                } catch (e) {
-                    console.error('Error al resetear Turnstile', e);
-                }
+                const widgetId = form.id === 'login-form' ? loginWidgetId : (form.id === 'register-form' ? registerWidgetId : googleWidgetId);
+                if (widgetId) window.turnstile.reset(widgetId);
             }
+        }
+    }
+
+    function renderTurnstile(view) {
+        if (!window.turnstile || !cloudflareSiteKey) return;
+        
+        if (view === 'login' && !loginWidgetId) {
+            loginWidgetId = window.turnstile.render('#turnstile-login-widget', { sitekey: cloudflareSiteKey });
+        } else if (view === 'register' && !registerWidgetId) {
+            registerWidgetId = window.turnstile.render('#turnstile-register-widget', { sitekey: cloudflareSiteKey });
+        } else if (view === 'google' && !googleWidgetId) {
+            googleWidgetId = window.turnstile.render('#turnstile-google-widget', { sitekey: cloudflareSiteKey });
         }
     }
 
@@ -125,6 +160,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     function hideError() {
         errorMessageDiv.style.display = 'none';
     }
-
-    renderTurnstile('login');
 });

@@ -105,25 +105,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!messagesDiv) return;
         const msgEl = document.createElement('div');
         msgEl.classList.add('message');
+
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        const avatarImg = document.createElement('img');
+        avatarImg.src = msg.User.avatarUrl ? msg.User.avatarUrl : `https://i.pravatar.cc/40?u=${encodeURIComponent(msg.User.username)}`;
+        avatarImg.alt = "Avatar";
+        avatar.appendChild(avatarImg);
+
+        const body = document.createElement('div');
+        body.className = 'message-body';
+
+        const header = document.createElement('div');
+        header.className = 'message-header';
+        const usernameSpan = document.createElement('span');
+        usernameSpan.className = 'username';
+        usernameSpan.textContent = msg.User.username;
+        header.appendChild(usernameSpan);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.innerHTML = msg.content;
+
+        body.appendChild(header);
+        body.appendChild(contentDiv);
         
-        const avatarSrc = msg.User.avatarUrl 
-            ? msg.User.avatarUrl 
-            : `https://i.pravatar.cc/40?u=${encodeURIComponent(msg.User.username)}`;
+        const timestampSpan = document.createElement('span');
+        timestampSpan.className = 'timestamp-right';
+        timestampSpan.textContent = new Date(msg.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+        msgEl.appendChild(avatar);
+        msgEl.appendChild(body);
+        msgEl.appendChild(timestampSpan);
         
-        const timestamp = new Date(msg.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-        
-        msgEl.innerHTML = `
-            <div class="message-avatar">
-                <img src="${avatarSrc}" alt="Avatar">
-            </div>
-            <div class="message-body">
-                <div class="message-header">
-                    <span class="username">${msg.User.username}</span>
-                </div>
-                <div class="message-content">${msg.content}</div>
-            </div>
-            <span class="timestamp-right">${timestamp}</span>
-        `;
         messagesDiv.appendChild(msgEl);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
