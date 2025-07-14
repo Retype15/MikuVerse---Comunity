@@ -23,6 +23,10 @@ const User = sequelize.define('User', {
       }
     }
   },
+  bio: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   email: {
     type: DataTypes.STRING,
     allowNull: false,

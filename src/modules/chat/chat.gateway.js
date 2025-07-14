@@ -37,7 +37,8 @@ function initializeChat(io) {
         username: socket.user.username,
         email: socket.user.email,
         avatarUrl: socket.user.avatarUrl,
-        role: socket.user.role
+        role: socket.user.role,
+        bio: socket.user.bio
     });
 
     socket.on('request_chat_history', async (data, callback) => {

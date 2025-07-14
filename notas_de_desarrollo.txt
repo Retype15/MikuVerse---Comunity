@@ -1,0 +1,1 @@
+1. Recordar en produccin activar la verificacion SSL a database (eliminar regectedunautorized)-> ssl: { require: true }

@@ -45,28 +45,52 @@
 
             <div id="profile-view" class="view">
                 <div class="profile-card">
-                    <div class="profile-avatar">
-                        <img id="profile-avatar-img" src="/images/logo.png" alt="Avatar">
-                    </div>
                     <form id="profile-form">
+                        <h2>Editar Mi Perfil</h2>
+                        <div id="profile-message" class="message-feedback"></div>
+                        <div class="profile-avatar">
+                            <img id="profile-avatar-img" src="/images/logo.png" alt="Avatar">
+                        </div>
                         <label for="profile-username">Nombre de Usuario</label>
-                        <input type="text" id="profile-username" readonly>
-                        
+                        <input type="text" id="profile-username">
+
                         <label for="profile-email">Correo Electrónico</label>
-                        <input type="email" id="profile-email" readonly>
+                        <input type="email" id="profile-email" readonly title="El correo electrónico no se puede cambiar.">
                         
-                        <p><i>(La funcionalidad de edición estará disponible pronto)</i></p>
-                        <button type="submit" disabled>Guardar Cambios</button>
+                        <label for="profile-avatar-url">URL del Avatar</label>
+                        <input type="url" id="profile-avatar-url" placeholder="https://ejemplo.com/imagen.png">
+
+                        <label for="profile-bio">Biografía</label>
+                        <textarea id="profile-bio" rows="4" placeholder="Cuéntanos un poco sobre ti..."></textarea>
+                        
+                        <hr>
+                        <h3>Cambiar Contraseña</h3>
+                        <label for="profile-current-password">Contraseña Actual</label>
+                        <input type="password" id="profile-current-password" placeholder="Deja en blanco si no quieres cambiarla",autocomplete="new-password">
+                        
+                        <label for="profile-new-password">Nueva Contraseña</label>
+                        <input type="password" id="profile-new-password" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+                        
+                        <button type="submit">Guardar Cambios</button>
                     </form>
                     <hr>
                     <button id="logout-btn">Cerrar Sesión</button>
+                </div>
+            </div>
+
+            <div id="public-profile-view" class="view">
+                <div class="profile-card">
+                    <div id="public-profile-content">
+                        <!-- El contenido se llenará con JavaScript -->
+                        <div class="loading-spinner">Cargando perfil...</div>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-    <script src="app.js"></script>
-    <script src="router.js"></script>
+    <script src="/app.js"></script>
+    <script src="/router.js"></script>
 </body>
 </html>

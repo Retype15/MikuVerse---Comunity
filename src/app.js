@@ -10,16 +10,33 @@ const config = require('./core/config/config');
 const miscRoutes = require('./modules/misc/misc.routes');
 const User = require('./modules/users/user.model');
 const Message = require('./modules/chat/message.model');
+const authRoutes = require('./modules/auth/auth.routes');
+const userRoutes = require('./modules/users/user.routes');
 
 require('./modules/auth/passport.config');
-const authRoutes = require('./modules/auth/auth.routes');
 
 User.hasMany(Message, { foreignKey: 'userId' });
 Message.belongsTo(User, { foreignKey: 'userId' });
 
 const app = express();
 
-app.use(helmet({ contentSecurityPolicy: false })); // Basico por si la de abajo da problemas. Efectivamente dio problemas XD
+//app.use(helmet({ contentSecurityPolicy: false })); // Basico por si la de abajo da problemas. Efectivamente dio problemas XD
+app.use( //Version 2.0
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://challenges.cloudflare.com", "https://cdn.socket.io"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https://lh3.googleusercontent.com", "https://api.dicebear.com"],
+        connectSrc: ["'self'", "https://challenges.cloudflare.com", "wss:", "ws:"],
+        frameSrc: ["'self'", "https://challenges.cloudflare.com"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+  })
+);
 /*app.use(
   helmet({
     // si no se entienden completamente. En una aplicación de misión crítica, se estudiarían más a fondo.
@@ -128,9 +145,23 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/misc', miscRoutes);
+app.use('/api/users', userRoutes);
 
-app.get(/^(.*)$/, (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+//app.use((req, res, next) => {
+//  res.status(404).json({ message: 'Ruta no encontrada.' });
+//});
+//
+//app.use((err, req, res, next) => {
+//  logger.error('Error global no capturado:', err);
+//  res.status(500).json({ message: 'Error interno del servidor.' });
+//});
+
+app.use('/api', (req, res) => {
+  res.status(404).json({ message: 'Ruta de API no encontrada.' });
+});
+
+app.get(/^(?!\/api).*$/, (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'app.html'));
 });
 
 sequelize.sync()

@@ -1,3 +1,4 @@
+// /public/router.js
 document.addEventListener('DOMContentLoaded', () => {
     const navLinks = document.querySelectorAll('.nav-link');
     const views = document.querySelectorAll('.view');
@@ -5,37 +6,41 @@ document.addEventListener('DOMContentLoaded', () => {
     let chatHistoryLoaded = false;
 
     function handleRouteChange() {
-        const hash = window.location.hash || '#chat';
+        const hashParts = window.location.hash.split('?');
+        const mainHash = hashParts[0] || '#chat';
+        const queryParams = new URLSearchParams(hashParts[1] || '');
+        const usernameToShow = queryParams.get('user');
 
         views.forEach(view => view.classList.remove('active'));
         navLinks.forEach(link => link.classList.remove('active'));
-
-        const activeView = document.querySelector(hash + '-view');
-        const activeLink = document.querySelector(`a[href="${hash}"]`);
+        
+        let activeView;
+        if (mainHash === '#profile' && usernameToShow) {
+            activeView = document.querySelector('#public-profile-view');
+        } else {
+            activeView = document.querySelector(mainHash + '-view');
+            const activeLink = document.querySelector(`a[href="${mainHash}"]`);
+            if (activeLink) activeLink.classList.add('active');
+        }
 
         if (activeView) {
             activeView.classList.add('active');
-        }
-        
-        if (activeLink) {
-            activeLink.classList.add('active');
         }
 
         const checkSocketAndLoad = setInterval(() => {
             if (window.MikuVerse && window.MikuVerse.socket && window.MikuVerse.socket.connected) {
                 clearInterval(checkSocketAndLoad);
 
-                if (hash === '#chat' && !chatHistoryLoaded) {
+                if (mainHash === '#chat' && !chatHistoryLoaded) {
                     window.MikuVerse.requestChatHistory();
                     chatHistoryLoaded = true;
+                } else if (mainHash === '#profile' && usernameToShow) {
+                    window.MikuVerse.requestUserProfile(usernameToShow);
                 }
-                // Aquí se anade la logica para futuras secciones de chat, ejemplo:
-                // else if (hash === '#gallery') { window.MikuVerse.requestGallery(); }
             }
         }, 100);
     }
 
     window.addEventListener('hashchange', handleRouteChange);
-    
     handleRouteChange();
 });

@@ -1,15 +1,15 @@
 const express = require('express');
-const passport = 'passport';
+const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const config = require('../../core/config/config');
 const { register, login, completeGoogleRegistration } = require('./auth.controller');
 const verifyCloudflare = require('../../core/middleware/cloudflare.middleware');
 const router = express.Router();
 
-router.get('/google', require('passport').authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/google/callback', (req, res, next) => {
-  require('passport').authenticate('google', { session: false, failureRedirect: '/index.html?error=google_auth_failed' }, (err, user, info) => {
+  passport.authenticate('google', { session: false, failureRedirect: '/index.html?error=google_auth_failed' }, (err, user, info) => {
     
     if (err) {
       return next(err);
