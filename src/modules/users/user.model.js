@@ -12,6 +12,16 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
+    validate: {
+      is: {
+        args: /^[a-zA-Z0-9]([a-zA-Z0-9_-\s]{1,28})[a-zA-Z0-9]$/,
+        msg: 'Nombre de usuario inválido.'
+      },
+      len: {
+        args: [3, 30],
+        msg: 'El nombre de usuario debe tener entre 3 y 30 caracteres.'
+      }
+    }
   },
   email: {
     type: DataTypes.STRING,
@@ -33,6 +43,11 @@ const User = sequelize.define('User', {
   avatarUrl: {
     type: DataTypes.STRING,
     allowNull: true,
+    validate: {
+      isUrl: {
+        msg: 'La URL del avatar proporcionada no es válida.'
+      }
+    }
   },
   role: {
     type: DataTypes.ENUM('user', 'moderator', 'admin'),
@@ -41,7 +56,20 @@ const User = sequelize.define('User', {
   },
 }, {
   hooks: {
+    beforeValidate: (user, options) => {
+      if (user.username) {
+        user.username = user.username.trim();
+      }
+      if (user.email) {
+        user.email = user.email.trim().toLowerCase();
+      }
+    },
     beforeCreate: async (user) => {
+      if (!user.avatarUrl && user.username) {
+        const seed = encodeURIComponent(user.username);
+        user.avatarUrl = `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${seed}`;
+      }
+
       if (user.password) {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);

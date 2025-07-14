@@ -101,6 +101,11 @@ window.MikuVerse = {
     },
 
     renderMessage: function(msg, isFromHistory = false) {
+        console.log("renderMessage: Recibido objeto de mensaje completo:", msg);
+        if (!msg || !msg.User) {
+            console.error("renderMessage: El mensaje o msg.User es nulo o indefinido. Saltando renderizado.");
+            return;
+        }
         const messagesDiv = document.querySelector('#chat-view .messages');
         if (!messagesDiv || !msg || !msg.User) return;
         if (document.getElementById(`message-${msg.id}`)) return;
@@ -112,12 +117,14 @@ window.MikuVerse = {
         msgEl.classList.add('message');
         msgEl.id = `message-${msg.id}`;
 
+        
+
         const avatarSrc = msg.User.avatarUrl ? msg.User.avatarUrl : `https://i.pravatar.cc/40?u=${encodeURIComponent(msg.User.username)}`;
         const timestamp = new Date(msg.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-        
-        msgEl.innerHTML = `
+        console.log(`renderMessage: Asignando URL de avatar para ${msg.User.username}:`, avatarSrc);
+         msgEl.innerHTML = `
             <div class="message-avatar">
-                <img src="${avatarSrc}" alt="${this.escapeHTML(msg.User.username)}" onerror="this.onerror=null;this.src='/images/logo.png';">
+                <img alt="${this.escapeHTML(msg.User.username)}">
             </div>
             <div class="message-body">
                 <div class="message-header">
@@ -127,6 +134,12 @@ window.MikuVerse = {
             </div>
             <span class="timestamp-right">${timestamp}</span>
         `;
+
+        const avatarImg = msgEl.querySelector('img');
+        avatarImg.src = avatarSrc;
+        avatarImg.onerror = () => {
+            avatarImg.src = '/images/logo.png';
+        };
         
         messagesDiv.appendChild(msgEl);
         
@@ -136,7 +149,14 @@ window.MikuVerse = {
     },
 
     renderProfileView: function(user) {
-        if (!user) return;
+        // --- INICIO DE DEPURACIÓN ---
+        console.log("renderProfileView: Recibido objeto de usuario completo:", user);
+        if (!user) {
+            console.error("renderProfileView: El objeto de usuario es nulo. Saltando renderizado.");
+            return;
+        }
+        // --- FIN DE DEPURACIÓN ---
+
         const usernameField = document.getElementById('profile-username');
         const emailField = document.getElementById('profile-email');
         const avatarImg = document.getElementById('profile-avatar-img');
@@ -144,8 +164,16 @@ window.MikuVerse = {
         if (usernameField) usernameField.value = user.username;
         if (emailField) emailField.value = user.email;
         if (avatarImg) {
-            avatarImg.src = user.avatarUrl || `https://i.pravatar.cc/150?u=${encodeURIComponent(user.username)}`;
-            avatarImg.onerror = () => { avatarImg.src = '/images/logo.png'; };
+            // --- DEPURACIÓN DE LA URL DEL AVATAR ---
+            const profileAvatarSrc = user.avatarUrl;
+            console.log(`renderProfileView: Asignando URL de avatar para perfil de ${user.username}:`, profileAvatarSrc);
+            avatarImg.src = profileAvatarSrc;
+            // --- FIN DE DEPURACIÓN ---
+            
+            avatarImg.onerror = () => {
+                console.error('Error al cargar imagen de perfil:', avatarImg.src);
+                avatarImg.src = '/images/logo.png';
+            };
         }
     },
 

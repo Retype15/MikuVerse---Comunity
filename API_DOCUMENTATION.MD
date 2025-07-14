@@ -48,10 +48,11 @@ Todas las peticiones a endpoints protegidos deben incluir un token JWT en la cab
 -   **Cuerpo de la Petición (Body):**
     ```json
     {
-      "username": "nuevo_usuario",
-      "email": "usuario@ejemplo.com",
-      "password": "una_contraseña_segura",
-      "cf-turnstile-response": "el_token_de_cloudflare"
+      "username": "nuevo_usuario",       // (Requerido)
+      "email": "usuario@ejemplo.com",  // (Requerido)
+      "password": "una_contraseña",    // (Requerido)
+      "avatarUrl": "https://url.com/a/mi/imagen.png", // (Opcional)
+      "cf-turnstile-response": "el_token_de_cloudflare" // (Requerido)
     }
     ```
 -   **Respuesta Exitosa (201 Created):**
@@ -71,9 +72,9 @@ Todas las peticiones a endpoints protegidos deben incluir un token JWT en la cab
 -   **Cuerpo de la Petición (Body):**
     ```json
     {
-      "email": "usuario@ejemplo.com",
-      "password": "una_contraseña_segura",
-      "cf-turnstile-response": "el_token_de_cloudflare"
+      "identifier": "nombre_de_usuario_o_email", // (Requerido)
+      "password": "una_contraseña_segura",       // (Requerido)
+      "cf-turnstile-response": "el_token_de_cloudflare" // (Requerido)
     }
     ```
 -   **Respuesta Exitosa (200 OK):**

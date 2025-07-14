@@ -19,12 +19,14 @@ passport.use(new GoogleStrategy({
         return done(null, user);
       } else {
         logger.info(`Nuevo intento de registro con Google para el email: ${profile.emails[0].value}. Requiere completar perfil.`);
+
+        const cleanedDisplayName = (profile.displayName || 'user').replace(/[^a-zA-Z0-9_-\s]/g, '').trim()
         
         const tempPayload = {
           googleId: profile.id,
           email: profile.emails[0].value,
-          avatarUrl: profile.photos[0].value,
-          suggestedUsername: profile.displayName.replace(/\s/g, '') || 'user'
+          suggestedUsername: cleanedDisplayName.substring(0, 30),
+          avatarUrl: profile.photos[0].value.startsWith('http') ? profile.photos[0].value : null,
         };
 
         const tempToken = jwt.sign(tempPayload, config.jwt.secret, { expiresIn: '10m' });
