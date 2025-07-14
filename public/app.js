@@ -1,6 +1,6 @@
 // public/app.js
 
-window.MikuVerse = {
+window.Client = {
     socket: null,
     currentUser: null,
     init: function() {
@@ -277,5 +277,5 @@ window.MikuVerse = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.MikuVerse.init();
+    window.Client.init();
 });

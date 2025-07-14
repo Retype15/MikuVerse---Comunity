@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('reg-password').value;
         
         try {
-            // NOTA: Omitimos cf-turnstile-response para este ejemplo. En la app real es OBLIGATORIO.
+            // NOTA: Omitimos turnstileToken para este ejemplo. En la app real es OBLIGATORIO.
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

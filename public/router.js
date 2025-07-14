@@ -1,4 +1,3 @@
-// /public/router.js
 document.addEventListener('DOMContentLoaded', () => {
     const navLinks = document.querySelectorAll('.nav-link');
     const views = document.querySelectorAll('.view');
@@ -28,14 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const checkSocketAndLoad = setInterval(() => {
-            if (window.MikuVerse && window.MikuVerse.socket && window.MikuVerse.socket.connected) {
+            if (window.Client && window.Client.socket && window.Client.socket.connected) {
                 clearInterval(checkSocketAndLoad);
 
                 if (mainHash === '#chat' && !chatHistoryLoaded) {
-                    window.MikuVerse.requestChatHistory();
+                    window.Client.requestChatHistory();
                     chatHistoryLoaded = true;
                 } else if (mainHash === '#profile' && usernameToShow) {
-                    window.MikuVerse.requestUserProfile(usernameToShow);
+                    window.Client.requestUserProfile(usernameToShow);
                 }
             }
         }, 100);

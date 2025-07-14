@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
-        data['cf-turnstile-response'] = turnstileResponse;
+        data['turnstileToken'] = turnstileResponse;
 
         try {
             const response = await fetch(endpoint, {

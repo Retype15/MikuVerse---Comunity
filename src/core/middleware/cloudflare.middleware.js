@@ -1,7 +1,7 @@
 const logger = require('../config/logger');
 
 const verifyCloudflare = async (req, res, next) => {
-  const token = req.body['cf-turnstile-response'];
+  const token = req.body['turnstileToken'];
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
   if (!token) {

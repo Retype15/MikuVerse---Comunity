@@ -32,35 +32,35 @@ function initializeChat(io) {
     logger.info(`Usuario conectado al chat: ${socket.user.username} (Socket ID: ${socket.id})`);
 
     socket.join('global');
-    
+
     socket.emit('user_profile', {
-        username: socket.user.username,
-        email: socket.user.email,
-        avatarUrl: socket.user.avatarUrl,
-        role: socket.user.role,
-        bio: socket.user.bio
+      username: socket.user.username,
+      email: socket.user.email,
+      avatarUrl: socket.user.avatarUrl,
+      role: socket.user.role,
+      bio: socket.user.bio
     });
 
     socket.on('request_chat_history', async (data, callback) => {
-        const channel = data && data.channel ? data.channel : 'global';
-        logger.debugOnly(`Usuario ${socket.user.username} solicita historial para el canal: ${channel}`);
+      const channel = data && data.channel ? data.channel : 'global';
+      logger.debugOnly(`Usuario ${socket.user.username} solicita historial para el canal: ${channel}`);
 
-        try {
-            const lastMessages = await Message.findAll({
-                where: { channel: channel },
-                order: [['createdAt', 'ASC']],
-                limit: 50,
-                include: { model: User, attributes: ['id', 'username', 'avatarUrl'] }
-            });
-            if (callback) {
-                callback({ history: lastMessages });
-            }
-        } catch(error) {
-            logger.error(`Error al cargar el historial del chat para ${channel}:`, error);
-            if (callback) {
-                callback({ error: 'No se pudo cargar el historial del chat.' });
-            }
+      try {
+        const lastMessages = await Message.findAll({
+          where: { channel: channel },
+          order: [['createdAt', 'ASC']],
+          limit: 50,
+          include: { model: User, attributes: ['id', 'username', 'avatarUrl'] }
+        });
+        if (callback) {
+          callback({ history: lastMessages });
         }
+      } catch (error) {
+        logger.error(`Error al cargar el historial del chat para ${channel}:`, error);
+        if (callback) {
+          callback({ error: 'No se pudo cargar el historial del chat.' });
+        }
+      }
     });
 
 
@@ -72,7 +72,7 @@ function initializeChat(io) {
       const cleanContent = purify.sanitize(receivedContent).trim();
 
       if (cleanContent === '') return;
-      
+
       const channel = data.channel || 'global';
 
       logger.debugOnly(`Mensaje de ${socket.user.username} a ${channel}: ${receivedContent}`);
@@ -85,14 +85,14 @@ function initializeChat(io) {
         });
 
         const messageToSend = {
-            id: message.id,
-            content: cleanContent,
-            createdAt: message.createdAt,
-            User: {
-                id: socket.user.id,
-                username: socket.user.username,
-                avatarUrl: socket.user.avatarUrl
-            }
+          id: message.id,
+          content: cleanContent,
+          createdAt: message.createdAt,
+          User: {
+            id: socket.user.id,
+            username: socket.user.username,
+            avatarUrl: socket.user.avatarUrl
+          }
         };
         io.to(channel).emit('receive_message', messageToSend);
       } catch (error) {
@@ -101,17 +101,35 @@ function initializeChat(io) {
     });
 
     socket.on('delete_message', async (data) => {
-        if (socket.user.role === 'moderator' || socket.user.role === 'admin') {
-            try {
-                const messageId = data.messageId;
-                const result = await Message.destroy({ where: { id: messageId }});
-                if (result > 0) {
-                    io.to('global').emit('message_deleted', { messageId });
-                    logger.info(`El usuario ${socket.user.username} borró el mensaje ${messageId}`);
-                }
-            } catch(error) {
-                logger.error('Error al borrar mensaje:', error);
+      const messageId = data.messageId;
+      if (!messageId) {
+        socket.emit('error_message', { type: 'invalid_request', message: 'ID del mensaje no proporcionado.' });
+        return;
+      }
+        try {
+          const messageToDelete = await Message.findByPk(messageId);
+          if (!messageToDelete) {
+            socket.emit('error_message', { type: 'not_found', message: 'Mensaje no encontrado.' });
+            return;
+          }
+          const isAuthorized = (socket.user.role === 'moderator' || socket.user.role === 'admin') || messageToDelete.userId === socket.user.id;
+          
+          if (isAuthorized) {
+            const result = await Message.destroy({ where: { id: messageId }});
+            if (result > 0) {
+              io.to('global').emit('message_deleted', { messageId }); // Emitir a todos en el canal
+              logger.info(`El usuario ${socket.user.username} borró el mensaje ${messageId}`);
+            } else {
+              socket.emit('error_message', { type: 'delete_failed', message: 'No se pudo eliminar el mensaje.' });
+              logger.warn(`Fallo al intentar borrar el mensaje ${messageId} para el usuario ${socket.user.username}.`);
             }
+          } else {
+              socket.emit('error_message', { type: 'permission_denied', message: 'No tienes permiso para borrar este mensaje.' });
+              logger.warn(`Intento no autorizado de borrado de mensaje (${messageId}) por usuario: ${socket.user.username}. (No es dueño ni admin/mod).`);
+            }
+        } catch(error) {
+          logger.error(`Error al borrar mensaje ${messageId}:`, error);
+          socket.emit('error_message', { type: 'server_error', message: 'Error interno del servidor al intentar borrar el mensaje.' });
         }
     });
 

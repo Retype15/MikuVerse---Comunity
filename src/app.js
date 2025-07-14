@@ -20,7 +20,7 @@ Message.belongsTo(User, { foreignKey: 'userId' });
 
 const app = express();
 
-//app.use(helmet({ contentSecurityPolicy: false })); // Basico por si la de abajo da problemas. Efectivamente dio problemas XD
+//app.use(helmet({ contentSecurityPolicy: false })); // Basico por si algo falla o pra testear
 app.use( //Version 2.0
   helmet({
     contentSecurityPolicy: {
