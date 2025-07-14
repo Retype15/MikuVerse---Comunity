@@ -1,10 +1,9 @@
-// /src/modules/misc/misc.controller.js
 const config = require('../../core/config/config');
 
 const getFrontendConfig = (req, res) => {
-  console.log("--- DEBUG: Contenido del objeto config en /api/misc/config ---");
-  console.log(JSON.stringify(config, null, 2));
-  console.log("-----------------------------------------------------------------");
+  //console.log("--- DEBUG: Contenido del objeto config en /api/misc/config ---");
+  //console.log(JSON.stringify(config, null, 2));
+  //console.log("-----------------------------------------------------------------");
 
   const siteKey = config && config.cloudflare ? config.cloudflare.siteKey : undefined;
 

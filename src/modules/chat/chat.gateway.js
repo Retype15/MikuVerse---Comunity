@@ -1,4 +1,3 @@
-// src/modules/chat/chat.gateway.js
 const jwt = require('jsonwebtoken');
 const config = require('../../core/config/config');
 const logger = require('../../core/config/logger');
@@ -11,7 +10,6 @@ const window = new JSDOM('').window;
 const purify = DOMPurify(window);
 
 function initializeChat(io) {
-  // autenticar
   io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;
     if (!token) {
@@ -34,6 +32,7 @@ function initializeChat(io) {
     logger.info(`Usuario conectado al chat: ${socket.user.username} (Socket ID: ${socket.id})`);
 
     socket.join('global');
+    
     socket.emit('user_profile', {
         username: socket.user.username,
         email: socket.user.email,
@@ -41,17 +40,27 @@ function initializeChat(io) {
         role: socket.user.role
     });
 
-    try {
-        const lastMessages = await Message.findAll({
-            where: { channel: 'global' },
-            order: [['createdAt', 'ASC']],
-            limit: 50,
-            include: { model: User, attributes: ['username', 'avatarUrl'] }
-        });
-        socket.emit('chat_history', lastMessages);
-    } catch(error) {
-        logger.error('Error al cargar el historial del chat:', error);
-    }
+    socket.on('request_chat_history', async (data, callback) => {
+        const channel = data && data.channel ? data.channel : 'global';
+        logger.debugOnly(`Usuario ${socket.user.username} solicita historial para el canal: ${channel}`);
+
+        try {
+            const lastMessages = await Message.findAll({
+                where: { channel: channel },
+                order: [['createdAt', 'ASC']],
+                limit: 50,
+                include: { model: User, attributes: ['id', 'username', 'avatarUrl'] }
+            });
+            if (callback) {
+                callback({ history: lastMessages });
+            }
+        } catch(error) {
+            logger.error(`Error al cargar el historial del chat para ${channel}:`, error);
+            if (callback) {
+                callback({ error: 'No se pudo cargar el historial del chat.' });
+            }
+        }
+    });
 
 
     socket.on('send_message', async (data) => {
@@ -62,13 +71,15 @@ function initializeChat(io) {
       const cleanContent = purify.sanitize(receivedContent).trim();
 
       if (cleanContent === '') return;
+      
+      const channel = data.channel || 'global';
 
-      logger.debugOnly(`Mensaje recibido de ${socket.user.username}: ${receivedContent}`);
+      logger.debugOnly(`Mensaje de ${socket.user.username} a ${channel}: ${receivedContent}`);
 
       try {
         const message = await Message.create({
           content: cleanContent,
-          channel: 'global',
+          channel: channel,
           userId: socket.user.id,
         });
 
@@ -77,12 +88,12 @@ function initializeChat(io) {
             content: cleanContent,
             createdAt: message.createdAt,
             User: {
+                id: socket.user.id,
                 username: socket.user.username,
                 avatarUrl: socket.user.avatarUrl
             }
         };
-        //Por ahora solo global
-        io.to('global').emit('receive_message', messageToSend);
+        io.to(channel).emit('receive_message', messageToSend);
       } catch (error) {
         logger.error('Error al guardar o emitir mensaje:', error);
       }

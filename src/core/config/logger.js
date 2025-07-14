@@ -1,4 +1,3 @@
-// src/core/config/logger.js
 const pino = require('pino');
 const config = require('./config');
 

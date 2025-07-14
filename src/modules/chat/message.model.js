@@ -1,4 +1,3 @@
-// src/modules/chat/message.model.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../core/database/database');
 
@@ -17,7 +16,6 @@ const Message = sequelize.define('Message', {
     allowNull: false,
     defaultValue: 'global',
   },
-  // No necesitamos un campo 'username', porque lo obtenemos con la relación
 });
 
 module.exports = Message;

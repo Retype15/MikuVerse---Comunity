@@ -1,5 +1,3 @@
-// /src/modules/auth/auth.routes.js
-
 const express = require('express');
 const passport = 'passport';
 const jwt = require('jsonwebtoken');

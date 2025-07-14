@@ -1,5 +1,3 @@
-// /src/core/config/config.js
-
 require('dotenv').config();
 
 const isDebugMode = process.argv.includes('--debug');

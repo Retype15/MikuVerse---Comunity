@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     const navLinks = document.querySelectorAll('.nav-link');
     const views = document.querySelectorAll('.view');
+    
+    let chatHistoryLoaded = false;
 
     function handleRouteChange() {
         const hash = window.location.hash || '#chat';
@@ -13,19 +15,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (activeView) {
             activeView.classList.add('active');
-        } else {
-            // Fallback: si el hash no corresponde a ninguna vista, muestra el chat.
-            document.querySelector('#chat-view').classList.add('active');
         }
         
         if (activeLink) {
             activeLink.classList.add('active');
-        } else {
-            // Fallback: si no hay enlace activo, activa el del chat.
-            document.querySelector('a[href="#chat"]').classList.add('active');
         }
+
+        const checkSocketAndLoad = setInterval(() => {
+            if (window.MikuVerse && window.MikuVerse.socket && window.MikuVerse.socket.connected) {
+                clearInterval(checkSocketAndLoad);
+
+                if (hash === '#chat' && !chatHistoryLoaded) {
+                    window.MikuVerse.requestChatHistory();
+                    chatHistoryLoaded = true;
+                }
+                // Aquí se anade la logica para futuras secciones de chat, ejemplo:
+                // else if (hash === '#gallery') { window.MikuVerse.requestGallery(); }
+            }
+        }, 100);
     }
 
     window.addEventListener('hashchange', handleRouteChange);
+    
     handleRouteChange();
 });

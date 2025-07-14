@@ -1,5 +1,3 @@
-// /src/core/database/database.js
-
 const { Sequelize } = require('sequelize');
 const config = require('../config/config');
 const logger = require('../config/logger');

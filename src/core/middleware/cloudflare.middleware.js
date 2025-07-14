@@ -1,5 +1,3 @@
-// /src/core/middleware/cloudflare.middleware.js
-
 const logger = require('../config/logger');
 
 const verifyCloudflare = async (req, res, next) => {
@@ -10,7 +8,6 @@ const verifyCloudflare = async (req, res, next) => {
     return res.status(400).json({ message: 'Captcha de Cloudflare no proporcionado.' });
   }
 
-  // Preparamos los datos para enviar a Cloudflare
   const formData = new URLSearchParams();
   formData.append('secret', process.env.CLOUDFLARE_SECRET_KEY);
   formData.append('response', token);

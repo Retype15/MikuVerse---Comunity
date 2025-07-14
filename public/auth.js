@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // Función para decodificar un JWT sin verificar la firma (solo para leer datos públicos)
     const decodeJwt = (token) => {
         try {
             return JSON.parse(atob(token.split('.')[1]));
@@ -8,14 +7,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // --- 1. Verificación Inicial ---
     const token = localStorage.getItem('jwt_token');
     if (token) {
         window.location.href = '/app.html';
         return;
     }
 
-    // --- 2. Obtener Configuración del Backend ---
     let cloudflareSiteKey = null;
     try {
         const response = await fetch('/api/misc/config');
@@ -29,7 +26,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // --- 3. Elementos del DOM y Estado ---
     const loginView = document.getElementById('login-view');
     const registerView = document.getElementById('register-view');
     const googleCompleteView = document.getElementById('google-complete-view');
@@ -49,12 +45,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const allViews = [loginView, registerView, googleCompleteView];
 
-    // --- 4. Manejo de Vistas y Flujo de Autenticación ---
     const urlParams = new URLSearchParams(window.location.search);
     const tempToken = urlParams.get('tempToken');
 
     if (tempToken) {
-        // --- FLUJO: COMPLETAR REGISTRO DE GOOGLE ---
         const decoded = decodeJwt(tempToken);
         if (decoded && decoded.email) {
             allViews.forEach(v => v.classList.remove('active'));
@@ -65,13 +59,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('google-username').value = decoded.suggestedUsername + Math.floor(Math.random() * 1000);
             
             renderTurnstile('google');
-            // Limpiar URL
             window.history.replaceState({}, document.title, "/index.html");
         } else {
             showError('El token de registro es inválido. Por favor, intenta registrarte con Google de nuevo.');
         }
     } else {
-        // --- FLUJO: LOGIN/REGISTRO NORMAL ---
         loginView.classList.add('active');
         renderTurnstile('login');
     }
@@ -91,7 +83,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- 5. Lógica de Formularios y Turnstile ---
     loginForm.addEventListener('submit', (e) => handleFormSubmit(e, '/api/auth/login', loginForm, handleLoginSuccess));
     registerForm.addEventListener('submit', (e) => handleFormSubmit(e, '/api/auth/register', registerForm, handleRegisterSuccess));
     googleCompleteForm.addEventListener('submit', (e) => handleFormSubmit(e, '/api/auth/complete-google', googleCompleteForm, handleLoginSuccess));
